@@ -1,0 +1,98 @@
+{
+  "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
+  "x-version": "1.0.0",
+  "name": "caliptra-doe",
+  "version": "0.1.0",
+  "description": "AES-256-CBC de-obfuscation engine for secure device secrets at boot time. Decrypts obfuscated UDS (Unique Device Secret), Field Entropy, and HEK (Hardware Embedded Key) using a shared obfuscation key, writing results directly to KeyVault. Features flow locking (one-shot per boot) and zeroize capability. AHB-Lite slave interface. Extracted from CHIPS Alliance Caliptra Root of Trust.",
+  "license": "Apache-2.0",
+  "maturity": "production",
+  "target": ["asic", "fpga"],
+  "design_type": ["digital"],
+  "created": "2026-03-27T20:52:56Z",
+  "updated": "2026-03-27T20:52:56Z",
+  "source": {
+    "type": "git",
+    "url": "https://github.com/chipsalliance/caliptra-rtl",
+    "commit": "a47402b3ac20c15c7d18f17456fb9cca56f25274",
+    "ip_path": "src/doe",
+    "private": false,
+    "containsEncryptedPayload": false,
+    "indexing": true
+  },
+  "maintainers": [{"name": "Vyges", "email": "team@vyges.com", "url": "https://vyges.com", "github": "vyges"}],
+  "interfaces": [
+    {"type": "bus", "direction": "slave", "protocol": "AHB-Lite", "port": "ahb", "width": 32, "description": "AHB-Lite slave. 32-bit address and data."},
+    {"type": "keyvault", "direction": "output", "protocol": "kv_write", "port": "kv_write", "description": "KeyVault write interface for de-obfuscated secrets."},
+    {"type": "control", "direction": "input", "port": "cptra_obf_key", "width": 256, "description": "Shared obfuscation key (256-bit) for AES decryption."},
+    {"type": "control", "direction": "input", "port": "obf_uds_seed", "width": 128, "description": "Obfuscated UDS input."},
+    {"type": "control", "direction": "input", "port": "obf_field_entropy", "width": 128, "description": "Obfuscated Field Entropy input."},
+    {"type": "interrupt", "direction": "output", "port": "error_intr", "description": "Error interrupt."},
+    {"type": "interrupt", "direction": "output", "port": "notif_intr", "description": "Command done notification interrupt."},
+    {"type": "clock", "direction": "input", "port": "clk", "description": "System clock."},
+    {"type": "reset", "direction": "input", "port": "reset_n", "polarity": "active_low", "description": "Asynchronous active-low reset."}
+  ],
+  "parameters": [],
+  "performance": {
+    "key_sizes": [128, 256],
+    "block_size": 128,
+    "cipher_mode": "CBC",
+    "operations": ["DOE_UDS (0x1)", "DOE_FE (0x2)", "DOE_CLEAR (0x3)", "DOE_HEK (0x4)"]
+  },
+  "architecture": {
+    "type": "peripheral",
+    "features": [
+      "AES-256-CBC encryption and decryption",
+      "De-obfuscation of UDS (128-bit), Field Entropy (128-bit), HEK (256-bit)",
+      "IV chaining for CBC mode (auto-update per block)",
+      "Flow locking: UDS_FLOW_DONE, FE_FLOW_DONE, HEK_FLOW_DONE (one-shot per boot)",
+      "KeyVault write for secure secret storage",
+      "OCP lock awareness for HEK operations",
+      "Zeroize command to clear obfuscated secrets",
+      "Forward and inverse S-Box (4x parallel, 256-byte ROM)",
+      "AES key expansion memory (10/14 rounds for 128/256-bit keys)",
+      "Separate encipher and decipher datapaths",
+      "PeakRDL-generated register file"
+    ]
+  },
+  "asic": {"flavor": "digital", "technology": ["sky130A", "GF22", "TSMC"]},
+  "fpga": {"toolchain": ["Vivado", "Quartus"], "devices": ["Artix-7", "Ultrascale+"]},
+  "dependencies": [
+    {"name": "caliptra-libs", "type": "library", "description": "AHB slave interface, clock gating"},
+    {"name": "keyvault", "type": "integration", "description": "KeyVault write interface for secret storage"}
+  ],
+  "test": {
+    "testbenches": ["systemverilog", "formal"],
+    "status": "upstream_passing",
+    "coverage": "functional",
+    "formal_verification": "Assertion IPs for all submodules (cipher core, IV, key expansion, enc/dec)",
+    "test_cases": [
+      {"name": "doe_cbc_tb", "description": "CBC mode testbench with NIST vectors", "status": "passing"},
+      {"name": "doe_core_cbc_tb", "description": "Core cipher testbench", "status": "passing"},
+      {"name": "doe_ctrl_tb", "description": "Control interface testbench", "status": "passing"}
+    ]
+  },
+  "documentation": {
+    "upstream": "https://github.com/chipsalliance/caliptra-rtl/tree/main/src/doe",
+    "caliptra_spec": "https://chipsalliance.github.io/Caliptra/"
+  },
+  "artifacts": {
+    "total_rtl_lines": 6239
+  },
+  "categories": {
+    "primary": "security",
+    "secondary": ["crypto", "key-management"],
+    "tags": ["doe", "aes-cbc", "de-obfuscation", "caliptra", "root-of-trust", "keyvault", "boot-security", "ahb", "chips-alliance"]
+  },
+  "trust": {
+    "verification_level": "silicon_proven",
+    "tapeout_count": 1,
+    "fpga_validated": false,
+    "formal_verified": true,
+    "maintained": true,
+    "last_activity": "2026-03-27"
+  },
+  "meta": {
+    "template": {"generator": "manual (gold-standard pass 2026-03-27)", "template_version": "1.0.0", "generated_at": "2026-03-27T20:52:56Z"},
+    "schema": {"version": "1.0.0"}
+  }
+}
